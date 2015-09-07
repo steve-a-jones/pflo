@@ -1,0 +1,30 @@
+all functions are promisified, but lazily since there may be a lot to evaluate
+
+cond form
+
+[
+	[fn, (fn, fn,...) <- sub flow],
+	[fn, fn, fn,...]
+]
+
+
+the flow itself is parsed and all entities are wrapped in their appropriate
+form handlers
+
+recursion on special forms?
+
+leave out q extensions for now - still need to think about this.
+
+I map the flow to an initialized list of flo parsers.
+
+Essentially the promise chain consists of initialized parsers. I guess what's
+interesting is that the special forms do not get parsed and promisified until
+they are evaluated - this means that 'sub' flows will surface lazily and attach
+themselves to the main flo channel, deferring its resolution.
+
+
+
+
+
+
+
