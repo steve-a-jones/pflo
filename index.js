@@ -1,29 +1,46 @@
 var r = require('ramda');
 var q = require('q');
 
-var args2List = Array.prototype.slice.call;
+var pCall      = r.bind(q.fcall, q);
+var All        = r.bind(q.all, q);
+//var When       = r.when()
+var asList     = function (x) { return [].concat(x) };
 
-var promiseFlow = function promiseFlow (pChainList) {
-	return r.reduce(q.when, q(null), pChainList);
+var args2List = function (x) {
+	return Array.prototype.slice.call(x);
 };
 
-var nextThenPLink = r.ifElse(r.is(Function), r.identity, r.always);
+var tap = r.tap(function () {
+	console.log('tap : ', arguments);
+});
 
-var identityFlo = function (form) {
-	r.ifElse(r.is(Function), r.identity, r.always);
+var nextThenPLink       = r.ifElse(r.is(Function), r.identity, r.always);
+var mapListToPThunks    = r.pipe(asList, r.map(nextThenPLink));
+var mapListToPromises   = r.pipe(mapListToPThunks, r.map(pCall));
+
+var mapListToPromiseSeq = function (seqList) {
+	return r.reduce(function (floChain, fn) {
+		return floChain.then(fn);
+	}, q(null), mapListToPThunks(seqList));
 };
 
-var isCondFlo     = r.pipe(r.nth(0), r.isArrayLike);
-var isPartialFlo  = r.pipe(r.nth(0), r.is(Function));
+var isCondFlo    = r.pipe(r.head, r.isArrayLike);
+var isPartialFlo = r.pipe(r.head, r.is(Function));
+
+var identityFlo = function (pEntity) {
+	console.log('identity flo..');
+};
 
 var condFlo = function (form) {
 
 };
 
-var partialFlo = function () {
-	var args = args2List(arguments);
-	return function () {
-		return q.all(mapListToPromises(r.tail(args))).spread(r.head(args));
+var partialFlo = function (partialForm) {
+	return function (initVal) {
+		var fn        = r.head(partialForm);
+		var fnLitArgs = r.append(initVal, r.tail(partialForm));
+		var fnPArgs   = mapListToPromises(fnLitArgs);
+		return All(mapListToPromises(fnPArgs)).spread(fn);
 	};
 };
 
@@ -32,39 +49,36 @@ var specialFormFlo = r.cond([
 	[isCondFlo, condFlo]
 ]);
 
-var isSpecialFormKey = r.equals('*');
-var isSpecialFormFlo = r.both(r.isArrayLike, r.pipe(r.nth(0), isSpecialFormKey));
+var isSpecialFormFlo = r.both(r.isArrayLike, r.pipe(r.nth(0), r.either(r.isArrayLike, r.is(Function))));
 var isIdentityFlo    = r.either(r.is(Function), r.complement(isSpecialFormFlo));
 
 var floForms = [
 	[isIdentityFlo, identityFlo],
-	[isSpecialFormFlo, r.pipe(r.tail, specialFormFlo)]
+	[isSpecialFormFlo, specialFormFlo]
 ];
 
 var Pflo = r.map(r.cond(floForms));
 
-var _export = function () {
-	var pfloList = args2List(arguments);
+var _export = function _export () {
+	return r.pipe(
+		args2List,
+		Pflo,
+		mapListToPromiseSeq
+	)(arguments);
+};
 
-
-
-
-
+var xP = function () {
 	return q.Promise(function (res, rej) {
-		var pflo = Pflo(pfloList);
-
-
-		//var lazyEvalFloList = function () {
-		//
-		//};
-		//
-		//var floListEvalComplete = function (err, data) {
-		//
-		//};
-		//
-		//a.eachLimit(floList, 1, );
+		setTimeout(function () {
+			res('three');
+		}, 1000)
 	});
 };
 
+_export(
+	[function (x) { return x; }, xP],
+	[function (one, two, three) { console.log(one, two, three); return [three, two, one]}, r.always('one'), r.always('two')],
+	[tap]
+);
 
 
