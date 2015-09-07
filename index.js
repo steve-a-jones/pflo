@@ -3,7 +3,6 @@ var q = require('q');
 
 var pCall      = r.bind(q.fcall, q);
 var All        = r.bind(q.all, q);
-//var When       = r.when()
 var asList     = function (x) { return [].concat(x) };
 
 var args2List = function (x) {
@@ -14,34 +13,39 @@ var tap = r.tap(function () {
 	console.log('tap : ', arguments);
 });
 
-var nextThenPLink       = r.ifElse(r.is(Function), r.identity, r.always);
-var mapListToPThunks    = r.pipe(asList, r.map(nextThenPLink));
-var mapListToPromises   = r.pipe(mapListToPThunks, r.map(pCall));
+var asPThunk          = r.ifElse(r.is(Function), r.identity, r.always);
+var mapListToPThunks  = r.pipe(asList, r.map(asPThunk))     ;
+var mapListToPromises = r.pipe(mapListToPThunks, r.map(pCall));
 
 var mapListToPromiseSeq = function (seqList) {
+	var pThunks = mapListToPThunks(seqList);
+
 	return r.reduce(function (floChain, fn) {
 		return floChain.then(fn);
-	}, q(null), mapListToPThunks(seqList));
+	}, q(r.head(pThunks)()), r.tail(pThunks));
 };
 
 var isCondFlo    = r.pipe(r.head, r.isArrayLike);
 var isPartialFlo = r.pipe(r.head, r.is(Function));
 
 var identityFlo = function (pEntity) {
-	console.log('identity flo..');
-};
-
-var condFlo = function (form) {
-
+	return function (initVal) {
+		return q(asPThunk(initVal)()).then(asPThunk(pEntity));
+	};
 };
 
 var partialFlo = function (partialForm) {
 	return function (initVal) {
-		var fn        = r.head(partialForm);
-		var fnLitArgs = r.append(initVal, r.tail(partialForm));
-		var fnPArgs   = mapListToPromises(fnLitArgs);
+		var fn            = r.head(partialForm);
+		var fnPartialArgs = r.tail(partialForm);
+		var fnLitArgs     = r.ifElse(r.equals(undefined), r.always(fnPartialArgs), r.append(r.__, fnPartialArgs));
+		var fnPArgs       = mapListToPromises(fnLitArgs(initVal));
 		return All(mapListToPromises(fnPArgs)).spread(fn);
 	};
+};
+
+var condFlo = function (form) {
+
 };
 
 var specialFormFlo = r.cond([
@@ -76,7 +80,7 @@ var xP = function () {
 };
 
 _export(
-	[function (x) { return x; }, xP],
+	[function (x) { console.log('arguments', arguments); return x; }, _export(xP), xP],
 	[function (one, two, three) { console.log(one, two, three); return [three, two, one]}, r.always('one'), r.always('two')],
 	[tap]
 );
