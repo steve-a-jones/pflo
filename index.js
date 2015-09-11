@@ -23,7 +23,7 @@ var isPartialFlo = r.pipe(r.head, r.is(Function));
 
 var identityFlo = function (pEntity) {
 	return function (initVal) {
-		return q(asPThunk(initVal)()).then(asPThunk(pEntity));
+		return q(initVal).then(asPThunk(pEntity));
 	};
 };
 
