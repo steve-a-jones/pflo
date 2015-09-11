@@ -1,17 +1,11 @@
 var r = require('ramda');
 var q = require('q');
 
-var pCall      = r.bind(q.fcall, q);
-var All        = r.bind(q.all, q);
-var asList     = function (x) { return [].concat(x) };
+var pCall  = r.bind(q.fcall, q);
+var All    = r.bind(q.all, q);
+var asList = function (x) { return [].concat(x) };
 
-var args2List = function (x) {
-	return Array.prototype.slice.call(x);
-};
-
-var tap = r.tap(function () {
-	console.log('tap : ', arguments);
-});
+var args2List = function (x) { return Array.prototype.slice.call(x); };
 
 var asPThunk          = r.ifElse(r.is(Function), r.identity, r.always);
 var mapListToPThunks  = r.pipe(asList, r.map(asPThunk))     ;
@@ -19,7 +13,6 @@ var mapListToPromises = r.pipe(mapListToPThunks, r.map(pCall));
 
 var mapListToPromiseSeq = function (seqList) {
 	var pThunks = mapListToPThunks(seqList);
-
 	return r.reduce(function (floChain, fn) {
 		return floChain.then(fn);
 	}, q(r.head(pThunks)()), r.tail(pThunks));
@@ -44,13 +37,13 @@ var partialFlo = function (partialForm) {
 	};
 };
 
-var condFlo = function (form) {
-
-};
+//var condFlo = function (form) {
+//	// TODO.
+//};
 
 var specialFormFlo = r.cond([
-	[isPartialFlo, partialFlo],
-	[isCondFlo, condFlo]
+	[isPartialFlo, partialFlo]
+	//[isCondFlo, condFlo]
 ]);
 
 var isSpecialFormFlo = r.both(r.isArrayLike, r.pipe(r.nth(0), r.either(r.isArrayLike, r.is(Function))));
@@ -61,28 +54,12 @@ var floForms = [
 	[isSpecialFormFlo, specialFormFlo]
 ];
 
-var Pflo = r.map(r.cond(floForms));
+var mapToPfloForms = r.map(r.cond(floForms));
 
-var _export = function _export () {
+module.exports = function pflo () {
 	return r.pipe(
 		args2List,
-		Pflo,
+		mapToPfloForms,
 		mapListToPromiseSeq
 	)(arguments);
 };
-
-var xP = function () {
-	return q.Promise(function (res, rej) {
-		setTimeout(function () {
-			res('three');
-		}, 1000)
-	});
-};
-
-_export(
-	[function (x) { console.log('arguments', arguments); return x; }, _export(xP), xP],
-	[function (one, two, three) { console.log(one, two, three); return [three, two, one]}, r.always('one'), r.always('two')],
-	[tap]
-);
-
-
