@@ -1,12 +1,11 @@
 {
   "name": "pflo",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "",
   "main": "index.js",
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "async": "^1.4.2",
     "q": "^1.4.1",
     "ramda": "^0.17.1"
   }
