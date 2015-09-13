@@ -31,9 +31,8 @@ var partialFlo = function (partialForm) {
 	return function (initVal) {
 		var fn            = r.head(partialForm);
 		var fnPartialArgs = r.tail(partialForm);
-		var fnLitArgs     = r.ifElse(r.equals(undefined), r.always(fnPartialArgs), r.append(r.__, fnPartialArgs));
-		var fnPArgs       = mapListToPromises(fnLitArgs(initVal));
-		return All(mapListToPromises(fnPArgs)).spread(fn);
+		var fnPArgs       = r.append(initVal, mapListToPromises(fnPartialArgs));
+		return All(fnPArgs).spread(fn);
 	};
 };
 
