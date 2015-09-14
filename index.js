@@ -18,7 +18,7 @@ var mapListToPromiseSeq = function (seqList) {
 	}, q(r.head(pThunks)()), r.tail(pThunks));
 };
 
-var isCondFlo    = r.pipe(r.head, r.isArrayLike);
+//var isCondFlo    = r.pipe(r.head, r.isArrayLike);
 var isPartialFlo = r.pipe(r.head, r.is(Function));
 
 var identityFlo = function (pEntity) {
@@ -27,29 +27,37 @@ var identityFlo = function (pEntity) {
 	};
 };
 
-var partialFlo = function (partialForm) {
-	return function (initVal) {
-		var fn            = r.head(partialForm);
-		var fnPartialArgs = r.tail(partialForm);
-		var fnPArgs       = r.append(initVal, mapListToPromises(fnPartialArgs));
-		return All(fnPArgs).spread(fn);
+var partialFlo = (function () {
+	var updateArgsWithPartialVal = function (placeHolderIdx, partialVal, fnPartialArgs) {
+		var pArgsMinusPlaceholder = r.remove(placeHolderIdx, 1, fnPartialArgs);
+		return r.insert(placeHolderIdx, partialVal, mapListToPromises(pArgsMinusPlaceholder));
 	};
-};
 
-//var condFlo = function (form) {
-//	// TODO.
-//};
+	var appendPartialValToArgs = function (partialVal, fnPartialArgs) {
+		return r.append(partialVal, mapListToPromises(fnPartialArgs));
+	};
+	
+	return function (partialForm) {
+		return function (partialVal) {
+			var fn             = r.head(partialForm);
+			var fnPartialArgs  = r.tail(partialForm);
+			var placeHolderIdx = r.findIndex(r.equals('__'), fnPartialArgs);
+			var hasPlaceholder = r.gt(placeHolderIdx, -1);
+			var finalArgs = hasPlaceholder ? updateArgsWithPartialVal(placeHolderIdx, partialVal, fnPartialArgs) : appendPartialValToArgs(partialVal, fnPartialArgs);
+			return All(finalArgs).spread(fn);
+		}
+	};
+}());
 
 var specialFormFlo = r.cond([
 	[isPartialFlo, partialFlo]
-	//[isCondFlo, condFlo]
 ]);
 
 var isSpecialFormFlo = r.both(r.isArrayLike, r.pipe(r.nth(0), r.either(r.isArrayLike, r.is(Function))));
 var isIdentityFlo    = r.either(r.is(Function), r.complement(isSpecialFormFlo));
 
 var floForms = [
-	[isIdentityFlo, identityFlo],
+	[isIdentityFlo,    identityFlo],
 	[isSpecialFormFlo, specialFormFlo]
 ];
 
@@ -62,3 +70,8 @@ module.exports = function pflo () {
 		mapListToPromiseSeq
 	)(arguments);
 };
+
+
+
+
+
