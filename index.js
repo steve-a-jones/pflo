@@ -34,9 +34,10 @@ var partialFlo = (function () {
 	};
 
 	var appendPartialValToArgs = function (partialVal, fnPartialArgs) {
-		return r.append(partialVal, mapListToPromises(fnPartialArgs));
+		var pList = mapListToPromises(fnPartialArgs);
+		return typeof partialVal === 'undefined' ? pList : r.append(partialVal, pList);
 	};
-	
+
 	return function (partialForm) {
 		return function (partialVal) {
 			var fn             = r.head(partialForm);
