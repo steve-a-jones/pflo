@@ -1,8 +1,23 @@
+var r = require('ramda');
+var q = require('q');
 var test = require('tape');
-var plfo = require('../index');
-var underTestObj = plfo.underTest();
+var pflo = require('../index');
+var underTestObj = pflo.underTest();
 var args2ListTest = function () {
     return underTestObj.args2List(arguments);
+};
+var bar = function () {
+    setTimeout(function () {
+        console.log("bar");
+    }, 500);
+};
+var baz = function () {
+    setTimeout(function () {
+        console.log("baz");
+    }, 1000);
+};
+var qux = function () {
+    return pflo(bar, baz);
 };
 
 test('testing asList function', function (t) {
@@ -25,4 +40,9 @@ test('testing mapToPfloForms', function (t) {
 test('testing mapListToPromiseSeq', function (t) {
     t.plan(1);
     t.equal(typeof underTestObj.mapListToPromiseSeq, 'function', 'should be a function');
+});
+
+test('testing pflo', function (t) {
+    t.plan(1);
+    t.equal(typeof pflo, 'function', 'should be a function');
 });
