@@ -3,10 +3,17 @@
   "version": "1.4.1",
   "description": "",
   "main": "index.js",
+  "scripts": {
+    "test": "tape test/*.js"
+  },
   "author": "",
   "license": "ISC",
   "dependencies": {
     "q": "^1.4.1",
     "ramda": "^0.17.1"
+  },
+  "devDependencies": {
+    "tape": "^4.5.1",
+    "tape-catch": "^1.0.5"
   }
 }
