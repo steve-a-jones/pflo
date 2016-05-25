@@ -23,7 +23,7 @@ var mapListToPromiseSeq = function(seqList) {
 };
 
 //var isCondFlo    = r.pipe(r.head, r.isArrayLike);
-var isPartialFlo = r.pipe(r.head, r.is(Function));
+var isPartialFlo = r.pipe(r.head, r.is(Function)); // returns a Boolean
 
 var identityFlo = function(pEntity) {
     return function(initVal) {

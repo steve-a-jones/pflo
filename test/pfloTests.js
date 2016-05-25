@@ -6,18 +6,17 @@ var underTestObj = pflo.underTest();
 var args2ListTest = function () {
     return underTestObj.args2List(arguments);
 };
-var bar = function () {
-    setTimeout(function () {
-        console.log("bar");
-    }, 500);
+var arr = [];
+var pfloFuncTest = r.always("bar");
+var pfloFuncTest2 = r.always(456);
+var log = function (x) {
+    return arr.push(x); 
 };
-var baz = function () {
-    setTimeout(function () {
-        console.log("baz");
-    }, 1000);
-};
-var qux = function () {
-    return pflo(bar, baz);
+var pfloTest = function (x, y) {
+	return pflo(
+		log(x),
+		log(y)
+	);
 };
 
 test('testing asList function', function (t) {
@@ -29,20 +28,30 @@ test('testing asList function', function (t) {
 test('testing args2List', function (t) {
     t.plan(2);
     t.equal(typeof underTestObj.args2List, 'function', 'should be a function');
-    t.deepEqual(args2ListTest(1, 2, 3), [1, 2, 3], 'should take args and make an array');
+    t.deepEqual(args2ListTest(1, 2, 3), [1, 2, 3], 'should take args 1, 2, 3 and make an array [1, 2, 3]');
 });
 
 test('testing mapToPfloForms', function (t) {
     t.plan(1);
     t.equal(typeof underTestObj.mapToPfloForms, 'function', 'should be a function');
+    // needs more tests?
 });
 
 test('testing mapListToPromiseSeq', function (t) {
     t.plan(1);
     t.equal(typeof underTestObj.mapListToPromiseSeq, 'function', 'should be a function');
+    // needs more tests?
 });
 
-test('testing pflo', function (t) {
-    t.plan(1);
+test('testing pflo with primitive arguments: string and number', function (t) {
+    pfloTest("foo", 123);
+    t.plan(2);
     t.equal(typeof pflo, 'function', 'should be a function');
+    t.deepEqual(arr, ["foo", 123], 'should be equal to the arr ["foo", 123]');
+});
+
+test('testing pflo with functions as arguments', function (t) {
+    pfloTest(pfloFuncTest, pfloFuncTest2);
+    t.plan(1);
+    t.deepEqual(arr, ["foo", 123, pfloFuncTest, pfloFuncTest2], 'should be equal to the arr ["foo", 123, pfloFuncTest, pfloFuncTest2');
 });
